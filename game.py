@@ -111,6 +111,7 @@ def main():
     generation = 0
     total_population = np.sum(grid)
     speed = 10  # Initial speed
+    dragging = False  # Add a flag to track dragging state
     
     while running:
         for event in pygame.event.get():
@@ -130,10 +131,21 @@ def main():
                 if event.key == pygame.K_g:
                     show_grid_lines = not show_grid_lines  # Toggle grid lines
             if event.type == pygame.MOUSEBUTTONDOWN:
+                if event.button == 1:  # Left mouse button
+                    dragging = True  # Start dragging
+                    x, y = pygame.mouse.get_pos()
+                    x //= CELL_SIZE
+                    y //= CELL_SIZE
+                    grid[x, y] = 1 - grid[x, y]
+                    total_population = np.sum(grid)
+            if event.type == pygame.MOUSEBUTTONUP:
+                if event.button == 1:  # Left mouse button
+                    dragging = False  # Stop dragging
+            if event.type == pygame.MOUSEMOTION and dragging:
                 x, y = pygame.mouse.get_pos()
                 x //= CELL_SIZE
                 y //= CELL_SIZE
-                grid[x, y] = 1 - grid[x, y]
+                grid[x, y] = 1  # Make cell alive while dragging
                 total_population = np.sum(grid)
 
         screen.fill(BLACK)
