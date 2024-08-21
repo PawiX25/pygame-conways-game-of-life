@@ -7,14 +7,22 @@ on:
   pull_request:
     branches:
       - main
-  workflow_dispatch:
+  create:
+    tags:
+      - '*'
+
+permissions:
+  contents: write
 
 jobs:
-  build-linux:
-    runs-on: ubuntu-latest
+  build:
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        os: [ubuntu-latest, windows-latest]
 
     steps:
-    - name: Checkout repository
+    - name: Checkout code
       uses: actions/checkout@v2
 
     - name: Set up Python
@@ -27,58 +35,46 @@ jobs:
         python -m pip install --upgrade pip
         pip install pygame numpy matplotlib pyinstaller
 
-    - name: Build with PyInstaller
+    - name: Build executable
       run: |
         pyinstaller --onefile game.py
+      shell: bash
+
+    - name: Rename executable
+      run: |
+        if [[ "${{ matrix.os }}" == "ubuntu-latest" ]]; then
+          mv dist/game dist/game-linux
+        else
+          mv dist/game.exe dist/game-windows.exe
+        fi
+      shell: bash
 
     - name: Upload artifact
       uses: actions/upload-artifact@v2
       with:
-        name: game-linux
-        path: dist/game
-
-  build-windows:
-    runs-on: windows-latest
-
-    steps:
-    - name: Checkout repository
-      uses: actions/checkout@v2
-
-    - name: Set up Python
-      uses: actions/setup-python@v2
-      with:
-        python-version: '3.x'
-
-    - name: Install dependencies
-      run: |
-        python -m pip install --upgrade pip
-        pip install pygame numpy matplotlib pyinstaller
-
-    - name: Build with PyInstaller
-      run: |
-        pyinstaller --onefile game.py
-
-    - name: Upload artifact
-      uses: actions/upload-artifact@v2
-      with:
-        name: game-windows
-        path: dist/game.exe
+        name: ${{ matrix.os }}-game
+        path: |
+          dist/game-linux
+          dist/game-windows.exe
 
   release:
-    needs: [build-linux, build-windows]
+    needs: build
     runs-on: ubuntu-latest
     steps:
-    - name: Download Linux artifact
-      uses: actions/download-artifact@v2
-      with:
-        name: game-linux
-        path: ./dist
+    - name: Checkout code
+      uses: actions/checkout@v2
 
-    - name: Download Windows artifact
+    - name: Download Ubuntu build artifacts
       uses: actions/download-artifact@v2
       with:
-        name: game-windows
-        path: ./dist
+        name: ubuntu-latest-game
+        path: ./dist/ubuntu
+
+    - name: Download Windows build artifacts
+      uses: actions/download-artifact@v2
+      with:
+        name: windows-latest-game
+        path: ./dist/windows
 
     - name: Create Release
       id: create_release
@@ -86,23 +82,27 @@ jobs:
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       with:
-        tag_name: v1.0.0
-        release_name: Release v1.0.0
+        tag_name: ${{ github.ref_name }}
+        release_name: Release ${{ github.ref_name }}
         draft: false
         prerelease: false
 
-    - name: Upload Linux artifact to Release
+    - name: Upload Ubuntu Release Asset
       uses: actions/upload-release-asset@v1
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       with:
         upload_url: ${{ steps.create_release.outputs.upload_url }}
-        asset_path: ./dist/game
+        asset_path: ./dist/ubuntu/game-linux
         asset_name: game-linux
         asset_content_type: application/octet-stream
 
-    - name: Upload Windows artifact to Release
+    - name: Upload Windows Release Asset
       uses: actions/upload-release-asset@v1
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       with:
         upload_url: ${{ steps.create_release.outputs.upload_url }}
-        asset_path: ./dist/game.exe
+        asset_path: ./dist/windows/game-windows.exe
         asset_name: game-windows.exe
         asset_content_type: application/octet-stream
