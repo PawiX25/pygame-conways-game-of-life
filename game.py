@@ -45,7 +45,7 @@ GRID_COLOR = config["GRID_COLOR"]
 TEXT_BG_COLOR = config["TEXT_BG_COLOR"]
 
 screen = pygame.display.set_mode((WIDTH, HEIGHT))
-pygame.display.set_caption('Conway\'s Game of Life')
+pygame.display.set_caption("Conway's Game of Life")
 
 clock = pygame.time.Clock()
 
@@ -53,6 +53,9 @@ font = pygame.font.SysFont(None, config["FONT_SIZE"])
 
 def initialize_grid():
     return np.random.randint(2, size=(GRID_WIDTH, GRID_HEIGHT))
+
+def initialize_age_grid():
+    return np.zeros((GRID_WIDTH, GRID_HEIGHT), dtype=int)
 
 def save_grid(grid, filename="saved_grid.json"):
     with open(filename, "w") as f:
@@ -80,10 +83,14 @@ def load_grid_from_image(filename="saved_grid.png"):
             grid[x, y] = 1 if color == WHITE else 0
     return grid
 
-def draw_grid(grid):
+def draw_grid(grid, age_grid):
     for x in range(GRID_WIDTH):
         for y in range(GRID_HEIGHT):
-            color = WHITE if grid[x, y] == 1 else BLACK
+            if grid[x, y] == 1:
+                age = age_grid[x, y]
+                color = (0, min(255, age * 10), 0)  # Green color with intensity based on age
+            else:
+                color = BLACK
             pygame.draw.rect(screen, color, pygame.Rect(x * CELL_SIZE, y * CELL_SIZE, CELL_SIZE, CELL_SIZE))
 
 def draw_lines():
@@ -92,7 +99,7 @@ def draw_lines():
     for y in range(0, HEIGHT, CELL_SIZE):
         pygame.draw.line(screen, GRID_COLOR, (0, y), (WIDTH, y))
 
-def update_grid(grid):
+def update_grid(grid, age_grid):
     padded_grid = np.pad(grid, pad_width=1, mode='wrap')
     neighbor_sum = (
         padded_grid[:-2, :-2] + padded_grid[:-2, 1:-1] + padded_grid[:-2, 2:] +
@@ -104,7 +111,10 @@ def update_grid(grid):
     new_grid = np.copy(grid)
     new_grid[births] = 1
     new_grid[deaths] = 0
-    return new_grid, np.sum(births), np.sum(deaths)
+    age_grid[births] = 1
+    age_grid[deaths] = 0
+    age_grid[new_grid == 1] += 1
+    return new_grid, age_grid, np.sum(births), np.sum(deaths)
 
 def draw_statistics(grid, generation, births, deaths, avg_population, speed):
     live_cells = np.sum(grid)
@@ -158,6 +168,7 @@ def draw_statistics(grid, generation, births, deaths, avg_population, speed):
 
 def main():
     grid = initialize_grid()
+    age_grid = initialize_age_grid()
     running = True
     pause = False
     show_grid_lines = True
@@ -177,6 +188,7 @@ def main():
                     pause = not pause
                 if event.key == pygame.K_r:
                     grid = initialize_grid()
+                    age_grid = initialize_age_grid()
                     generation = 0
                     total_population = np.sum(grid)
                     live_cells_history = []
@@ -225,12 +237,12 @@ def main():
                 total_population = np.sum(grid)
 
         screen.fill(BLACK)
-        draw_grid(grid)
+        draw_grid(grid, age_grid)
         if show_grid_lines:
             draw_lines()
         
         if not pause:
-            grid, births, deaths = update_grid(grid)
+            grid, age_grid, births, deaths = update_grid(grid, age_grid)
             generation += 1
             total_population += np.sum(grid)
             avg_population = total_population / generation if generation != 0 else 0
