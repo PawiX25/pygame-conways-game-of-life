@@ -233,6 +233,14 @@ def load_grid_from_image(filename="grid_image.png"):
     else:
         print("Image file not found.")
         return initialize_grid()
+        
+def draw_brush(grid, x, y, brush_size, value):
+    """Draw the brush on the grid."""
+    start_x = max(0, x - brush_size // 2)
+    start_y = max(0, y - brush_size // 2)
+    end_x = min(GRID_WIDTH, x + brush_size // 2 + 1)
+    end_y = min(GRID_HEIGHT, y + brush_size // 2 + 1)
+    grid[start_x:end_x, start_y:end_y] = value
 
 def main():
     grid = initialize_grid()
@@ -245,6 +253,7 @@ def main():
     speed = config["SPEED"]
     dragging = False
     erase_dragging = False
+    brush_size = 5  # Default brush size
     live_cells_history = []
     ruleset = None
     show_tooltip = True  # Initial state of the tooltip
@@ -302,20 +311,24 @@ def main():
                     grid = load_grid_from_image()
                 if event.key == pygame.K_h:
                     show_tooltip = not show_tooltip  # Toggle tooltip display
+                if event.key == pygame.K_LEFT:  # Decrease brush size
+                    brush_size = max(1, brush_size - 1)
+                if event.key == pygame.K_RIGHT:  # Increase brush size
+                    brush_size += 1
             if event.type == pygame.MOUSEBUTTONDOWN:
-                if event.button == 1:
+                if event.button == 1:  # Left click to start drawing
                     dragging = True
                     x, y = pygame.mouse.get_pos()
                     x //= CELL_SIZE
                     y //= CELL_SIZE
-                    grid[x, y] = 1 - grid[x, y]
+                    draw_brush(grid, x, y, brush_size, 1)
                     total_population = np.sum(grid)
-                if event.button == 3:
+                if event.button == 3:  # Right click to start erasing
                     erase_dragging = True
                     x, y = pygame.mouse.get_pos()
                     x //= CELL_SIZE
                     y //= CELL_SIZE
-                    grid[x, y] = 0
+                    draw_brush(grid, x, y, brush_size, 0)
                     total_population = np.sum(grid)
             if event.type == pygame.MOUSEBUTTONUP:
                 if event.button == 1:
@@ -327,9 +340,9 @@ def main():
                 x //= CELL_SIZE
                 y //= CELL_SIZE
                 if dragging:
-                    grid[x, y] = 1
+                    draw_brush(grid, x, y, brush_size, 1)
                 if erase_dragging:
-                    grid[x, y] = 0
+                    draw_brush(grid, x, y, brush_size, 0)
                 total_population = np.sum(grid)
 
         screen.fill(BLACK)
