@@ -14,6 +14,7 @@ default_config = {
     "WHITE": (255, 255, 255),
     "BLACK": (0, 0, 0),
     "GREEN": (0, 255, 0),
+    "RED": (255, 0, 0),
     "GRID_COLOR": (50, 50, 50),
     "TEXT_BG_COLOR": (50, 50, 50),
     "FONT_SIZE": 36,
@@ -41,6 +42,7 @@ GRID_HEIGHT = HEIGHT // CELL_SIZE
 WHITE = config["WHITE"]
 BLACK = config["BLACK"]
 GREEN = config["GREEN"]
+RED = config["RED"]
 GRID_COLOR = config["GRID_COLOR"]
 TEXT_BG_COLOR = config["TEXT_BG_COLOR"]
 
@@ -50,6 +52,9 @@ pygame.display.set_caption("Conway's Game of Life")
 clock = pygame.time.Clock()
 
 font = pygame.font.SysFont(None, config["FONT_SIZE"])
+
+def interpolate_color(start_color, end_color, factor):
+    return tuple(int(start + (end - start) * factor) for start, end in zip(start_color, end_color))
 
 def initialize_grid():
     return np.random.randint(2, size=(GRID_WIDTH, GRID_HEIGHT))
@@ -88,7 +93,8 @@ def draw_grid(grid, age_grid):
         for y in range(GRID_HEIGHT):
             if grid[x, y] == 1:
                 age = age_grid[x, y]
-                color = (0, min(255, age * 10), 0)  # Green color with intensity based on age
+                factor = min(age / 10.0, 1.0)
+                color = interpolate_color(GREEN, RED, factor)
             else:
                 color = BLACK
             pygame.draw.rect(screen, color, pygame.Rect(x * CELL_SIZE, y * CELL_SIZE, CELL_SIZE, CELL_SIZE))
