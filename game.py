@@ -47,7 +47,7 @@ GRID_COLOR = config["GRID_COLOR"]
 TEXT_BG_COLOR = config["TEXT_BG_COLOR"]
 
 screen = pygame.display.set_mode((WIDTH, HEIGHT))
-pygame.display.set_caption("Conway's Game of Life")
+pygame.display.set_caption("Game of Life Variants")
 
 clock = pygame.time.Clock()
 
@@ -61,32 +61,6 @@ def initialize_grid():
 
 def initialize_age_grid():
     return np.zeros((GRID_WIDTH, GRID_HEIGHT), dtype=int)
-
-def save_grid(grid, filename="saved_grid.json"):
-    with open(filename, "w") as f:
-        json.dump(grid.tolist(), f)
-
-def load_grid(filename="saved_grid.json"):
-    with open(filename, "r") as f:
-        grid = np.array(json.load(f))
-    return grid
-
-def save_grid_as_image(grid, filename="saved_grid.png"):
-    image_surface = pygame.Surface((WIDTH, HEIGHT))
-    for x in range(GRID_WIDTH):
-        for y in range(GRID_HEIGHT):
-            color = WHITE if grid[x, y] == 1 else BLACK
-            pygame.draw.rect(image_surface, color, pygame.Rect(x * CELL_SIZE, y * CELL_SIZE, CELL_SIZE, CELL_SIZE))
-    pygame.image.save(image_surface, filename)
-
-def load_grid_from_image(filename="saved_grid.png"):
-    image_surface = pygame.image.load(filename)
-    grid = np.zeros((GRID_WIDTH, GRID_HEIGHT), dtype=int)
-    for x in range(GRID_WIDTH):
-        for y in range(GRID_HEIGHT):
-            color = image_surface.get_at((x * CELL_SIZE, y * CELL_SIZE))
-            grid[x, y] = 1 if color == WHITE else 0
-    return grid
 
 def draw_grid(grid, age_grid):
     for x in range(GRID_WIDTH):
@@ -105,15 +79,25 @@ def draw_lines():
     for y in range(0, HEIGHT, CELL_SIZE):
         pygame.draw.line(screen, GRID_COLOR, (0, y), (WIDTH, y))
 
-def update_grid(grid, age_grid):
+def update_grid(grid, age_grid, ruleset):
     padded_grid = np.pad(grid, pad_width=1, mode='wrap')
     neighbor_sum = (
         padded_grid[:-2, :-2] + padded_grid[:-2, 1:-1] + padded_grid[:-2, 2:] +
         padded_grid[1:-1, :-2] + padded_grid[1:-1, 2:] +
         padded_grid[2:, :-2] + padded_grid[2:, 1:-1] + padded_grid[2:, 2:]
     )
-    births = (grid == 0) & (neighbor_sum == 3)
-    deaths = (grid == 1) & ((neighbor_sum < 2) | (neighbor_sum > 3))
+    
+    # Apply different rulesets
+    if ruleset == "Conway":
+        births = (grid == 0) & (neighbor_sum == 3)
+        deaths = (grid == 1) & ((neighbor_sum < 2) | (neighbor_sum > 3))
+    elif ruleset == "HighLife":
+        births = (grid == 0) & ((neighbor_sum == 3) | (neighbor_sum == 6))
+        deaths = (grid == 1) & ((neighbor_sum < 2) | (neighbor_sum > 3))
+    elif ruleset == "DayAndNight":
+        births = (grid == 0) & ((neighbor_sum == 3) | (neighbor_sum == 6) | (neighbor_sum == 7) | (neighbor_sum == 8))
+        deaths = (grid == 1) & ((neighbor_sum < 3) | (neighbor_sum > 8))
+    
     new_grid = np.copy(grid)
     new_grid[births] = 1
     new_grid[deaths] = 0
@@ -199,20 +183,62 @@ def draw_tooltip():
     
     screen.blit(tooltip_surface, (WIDTH - 310, 10))  # Adjust the position as needed
 
+def draw_menu():
+    menu_text = [
+        "Select Game Mode:",
+        "1. Conway's Game of Life (B3/S23)",
+        "2. HighLife (B36/S23)",
+        "3. Day & Night (B3678/S34678)"
+    ]
+    
+    line_height = font.get_height()
+    menu_surface = pygame.Surface((500, line_height * len(menu_text)))
+    menu_surface.fill(TEXT_BG_COLOR)
+    
+    for i, line in enumerate(menu_text):
+        text_surface = font.render(line, True, GREEN)
+        menu_surface.blit(text_surface, (10, i * line_height))
+    
+    screen.blit(menu_surface, (WIDTH // 2 - 250, HEIGHT // 2 - 100))
+
 def main():
     grid = initialize_grid()
     age_grid = initialize_age_grid()
     running = True
     pause = False
     show_grid_lines = True
-    show_tooltip = False  # Initially, the tooltip is hidden
     generation = 0
     total_population = np.sum(grid)
     speed = config["SPEED"]
     dragging = False
     erase_dragging = False
     live_cells_history = []
+    ruleset = None
 
+    # Display the menu
+    menu_active = True
+    while menu_active:
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+                running = False
+                menu_active = False
+            if event.type == pygame.KEYDOWN:
+                if event.key == pygame.K_1:
+                    ruleset = "Conway"
+                    menu_active = False
+                if event.key == pygame.K_2:
+                    ruleset = "HighLife"
+                    menu_active = False
+                if event.key == pygame.K_3:
+                    ruleset = "DayAndNight"
+                    menu_active = False
+        
+        screen.fill(BLACK)
+        draw_menu()
+        pygame.display.flip()
+        clock.tick(10)
+
+    # Main simulation loop
     while running:
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
@@ -278,7 +304,7 @@ def main():
             draw_lines()
         
         if not pause:
-            grid, age_grid, births, deaths = update_grid(grid, age_grid)
+            grid, age_grid, births, deaths = update_grid(grid, age_grid, ruleset)
             generation += 1
             total_population += np.sum(grid)
             avg_population = total_population / generation if generation != 0 else 0
