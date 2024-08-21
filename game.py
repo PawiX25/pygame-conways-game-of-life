@@ -172,12 +172,40 @@ def draw_statistics(grid, generation, births, deaths, avg_population, speed):
     screen.blit(fps_surface, fps_rect.topleft)
     screen.blit(speed_surface, speed_rect.topleft)
 
+def draw_tooltip():
+    tooltip_text = [
+        "Controls:",
+        "SPACE: Pause/Resume",
+        "R: Reset Grid",
+        "UP: Increase Speed",
+        "DOWN: Decrease Speed",
+        "G: Toggle Grid Lines",
+        "S: Save Grid",
+        "L: Load Grid",
+        "I: Save Grid as Image",
+        "O: Load Grid from Image",
+        "Left Click: Add Cell",
+        "Right Click: Erase Cell",
+        "H: Toggle Help"
+    ]
+    
+    line_height = font.get_height()
+    tooltip_surface = pygame.Surface((300, line_height * len(tooltip_text)))
+    tooltip_surface.fill(TEXT_BG_COLOR)
+    
+    for i, line in enumerate(tooltip_text):
+        text_surface = font.render(line, True, GREEN)
+        tooltip_surface.blit(text_surface, (10, i * line_height))
+    
+    screen.blit(tooltip_surface, (WIDTH - 310, 10))  # Adjust the position as needed
+
 def main():
     grid = initialize_grid()
     age_grid = initialize_age_grid()
     running = True
     pause = False
     show_grid_lines = True
+    show_tooltip = False  # Initially, the tooltip is hidden
     generation = 0
     total_population = np.sum(grid)
     speed = config["SPEED"]
@@ -212,6 +240,8 @@ def main():
                     save_grid_as_image(grid)
                 if event.key == pygame.K_o:
                     grid = load_grid_from_image()
+                if event.key == pygame.K_h:
+                    show_tooltip = not show_tooltip  # Toggle tooltip display
             if event.type == pygame.MOUSEBUTTONDOWN:
                 if event.button == 1:
                     dragging = True
@@ -255,6 +285,9 @@ def main():
             live_cells_history.append(np.sum(grid))
 
         draw_statistics(grid, generation, births, deaths, avg_population, speed)
+        
+        if show_tooltip:
+            draw_tooltip()
         
         pygame.display.flip()
         clock.tick(speed)
