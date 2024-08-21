@@ -171,18 +171,20 @@ def draw_tooltip():
         "O: Load Grid from Image",
         "Left Click: Add Cell",
         "Right Click: Erase Cell",
-        "H: Toggle Help"
+        "H: Toggle Help",
+        "LEFT: Decrease Brush Size",
+        "RIGHT: Increase Brush Size"
     ]
     
     line_height = font.get_height()
-    tooltip_surface = pygame.Surface((300, line_height * len(tooltip_text)))
+    tooltip_surface = pygame.Surface((350, line_height * len(tooltip_text)))
     tooltip_surface.fill(TEXT_BG_COLOR)
     
     for i, line in enumerate(tooltip_text):
         text_surface = font.render(line, True, GREEN)
         tooltip_surface.blit(text_surface, (10, i * line_height))
     
-    screen.blit(tooltip_surface, (WIDTH - 310, 10))  # Adjust the position as needed
+    screen.blit(tooltip_surface, (WIDTH - 360, 10))
 
 def draw_menu():
     menu_text = [
