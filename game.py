@@ -11,6 +11,7 @@ GRID_HEIGHT = HEIGHT // CELL_SIZE
 WHITE = (255, 255, 255)
 BLACK = (0, 0, 0)
 GREEN = (0, 255, 0)
+GRID_COLOR = (50, 50, 50)  # Dark grey grid lines
 TEXT_BG_COLOR = (50, 50, 50)
 
 screen = pygame.display.set_mode((WIDTH, HEIGHT))
@@ -31,9 +32,9 @@ def draw_grid(grid):
 
 def draw_lines():
     for x in range(0, WIDTH, CELL_SIZE):
-        pygame.draw.line(screen, BLACK, (x, 0), (x, HEIGHT))
+        pygame.draw.line(screen, GRID_COLOR, (x, 0), (x, HEIGHT))
     for y in range(0, HEIGHT, CELL_SIZE):
-        pygame.draw.line(screen, BLACK, (0, y), (WIDTH, y))
+        pygame.draw.line(screen, GRID_COLOR, (0, y), (WIDTH, y))
 
 def update_grid(grid):
     new_grid = np.copy(grid)
@@ -106,6 +107,7 @@ def main():
     grid = initialize_grid()
     running = True
     pause = False
+    show_grid_lines = True  # Toggle for grid lines
     generation = 0
     total_population = np.sum(grid)
     speed = 10  # Initial speed
@@ -125,6 +127,8 @@ def main():
                     speed += 1  # Increase speed
                 if event.key == pygame.K_DOWN:
                     speed = max(1, speed - 1)  # Decrease speed but not below 1
+                if event.key == pygame.K_g:
+                    show_grid_lines = not show_grid_lines  # Toggle grid lines
             if event.type == pygame.MOUSEBUTTONDOWN:
                 x, y = pygame.mouse.get_pos()
                 x //= CELL_SIZE
@@ -133,8 +137,9 @@ def main():
                 total_population = np.sum(grid)
 
         screen.fill(BLACK)
-        draw_lines()
         draw_grid(grid)
+        if show_grid_lines:
+            draw_lines()  # Draw lines only if show_grid_lines is True
         
         if not pause:
             grid, births, deaths = update_grid(grid)
