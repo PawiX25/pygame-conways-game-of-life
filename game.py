@@ -1,6 +1,7 @@
 import pygame
 import numpy as np
 import matplotlib.pyplot as plt
+import json  # Add JSON module for saving and loading
 
 pygame.init()
 
@@ -24,6 +25,15 @@ font = pygame.font.SysFont(None, 36)
 
 def initialize_grid():
     return np.random.randint(2, size=(GRID_WIDTH, GRID_HEIGHT))
+
+def save_grid(grid, filename="saved_grid.json"):
+    with open(filename, "w") as f:
+        json.dump(grid.tolist(), f)
+
+def load_grid(filename="saved_grid.json"):
+    with open(filename, "r") as f:
+        grid = np.array(json.load(f))
+    return grid
 
 def draw_grid(grid):
     for x in range(GRID_WIDTH):
@@ -138,6 +148,10 @@ def main():
                     speed = max(1, speed - 1)  # Decrease speed but not below 1
                 if event.key == pygame.K_g:
                     show_grid_lines = not show_grid_lines  # Toggle grid lines
+                if event.key == pygame.K_s:  # Save the grid state
+                    save_grid(grid)
+                if event.key == pygame.K_l:  # Load the grid state
+                    grid = load_grid()
             if event.type == pygame.MOUSEBUTTONDOWN:
                 if event.button == 1:  # Left mouse button
                     dragging = True  # Start dragging
