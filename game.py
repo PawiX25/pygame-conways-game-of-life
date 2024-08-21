@@ -52,7 +52,7 @@ def update_grid(grid):
                 births += 1
     return new_grid, births, deaths
 
-def draw_statistics(grid, generation, births, deaths, avg_population):
+def draw_statistics(grid, generation, births, deaths, avg_population, speed):
     live_cells = np.sum(grid)
     total_cells = GRID_WIDTH * GRID_HEIGHT
     percentage_alive = (live_cells / total_cells) * 100
@@ -63,6 +63,8 @@ def draw_statistics(grid, generation, births, deaths, avg_population):
     births_text = f"Births: {births}"
     deaths_text = f"Deaths: {deaths}"
     avg_population_text = f"Avg Population: {avg_population:.2f}"
+    fps_text = f"FPS: {int(clock.get_fps())}"
+    speed_text = f"Speed: {speed}"
     
     live_cells_surface = font.render(live_cells_text, True, GREEN)
     percentage_surface = font.render(percentage_text, True, GREEN)
@@ -70,13 +72,17 @@ def draw_statistics(grid, generation, births, deaths, avg_population):
     births_surface = font.render(births_text, True, GREEN)
     deaths_surface = font.render(deaths_text, True, GREEN)
     avg_population_surface = font.render(avg_population_text, True, GREEN)
+    fps_surface = font.render(fps_text, True, GREEN)
+    speed_surface = font.render(speed_text, True, GREEN)
     
-    live_cells_rect = live_cells_surface.get_rect(topleft=(10, HEIGHT - 180))
-    percentage_rect = percentage_surface.get_rect(topleft=(10, HEIGHT - 150))
-    generation_rect = generation_surface.get_rect(topleft=(10, HEIGHT - 120))
-    births_rect = births_surface.get_rect(topleft=(10, HEIGHT - 90))
-    deaths_rect = deaths_surface.get_rect(topleft=(10, HEIGHT - 60))
-    avg_population_rect = avg_population_surface.get_rect(topleft=(10, HEIGHT - 30))
+    live_cells_rect = live_cells_surface.get_rect(topleft=(10, HEIGHT - 240))
+    percentage_rect = percentage_surface.get_rect(topleft=(10, HEIGHT - 210))
+    generation_rect = generation_surface.get_rect(topleft=(10, HEIGHT - 180))
+    births_rect = births_surface.get_rect(topleft=(10, HEIGHT - 150))
+    deaths_rect = deaths_surface.get_rect(topleft=(10, HEIGHT - 120))
+    avg_population_rect = avg_population_surface.get_rect(topleft=(10, HEIGHT - 90))
+    fps_rect = fps_surface.get_rect(topleft=(10, HEIGHT - 60))
+    speed_rect = speed_surface.get_rect(topleft=(10, HEIGHT - 30))
     
     pygame.draw.rect(screen, TEXT_BG_COLOR, live_cells_rect)
     pygame.draw.rect(screen, TEXT_BG_COLOR, percentage_rect)
@@ -84,6 +90,8 @@ def draw_statistics(grid, generation, births, deaths, avg_population):
     pygame.draw.rect(screen, TEXT_BG_COLOR, births_rect)
     pygame.draw.rect(screen, TEXT_BG_COLOR, deaths_rect)
     pygame.draw.rect(screen, TEXT_BG_COLOR, avg_population_rect)
+    pygame.draw.rect(screen, TEXT_BG_COLOR, fps_rect)
+    pygame.draw.rect(screen, TEXT_BG_COLOR, speed_rect)
     
     screen.blit(live_cells_surface, live_cells_rect.topleft)
     screen.blit(percentage_surface, percentage_rect.topleft)
@@ -91,6 +99,8 @@ def draw_statistics(grid, generation, births, deaths, avg_population):
     screen.blit(births_surface, births_rect.topleft)
     screen.blit(deaths_surface, deaths_rect.topleft)
     screen.blit(avg_population_surface, avg_population_rect.topleft)
+    screen.blit(fps_surface, fps_rect.topleft)
+    screen.blit(speed_surface, speed_rect.topleft)
 
 def main():
     grid = initialize_grid()
@@ -132,7 +142,7 @@ def main():
             total_population += np.sum(grid)
             avg_population = total_population / generation if generation != 0 else 0
         
-        draw_statistics(grid, generation, births, deaths, avg_population)
+        draw_statistics(grid, generation, births, deaths, avg_population, speed)
         
         pygame.display.flip()
         clock.tick(speed)
