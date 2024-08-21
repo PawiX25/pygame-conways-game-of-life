@@ -2,26 +2,54 @@ import pygame
 import numpy as np
 import matplotlib.pyplot as plt
 import json
+import os
 
 pygame.init()
 
-WIDTH, HEIGHT = 800, 600
-CELL_SIZE = 10
+# Default configuration
+default_config = {
+    "WIDTH": 800,
+    "HEIGHT": 600,
+    "CELL_SIZE": 10,
+    "WHITE": (255, 255, 255),
+    "BLACK": (0, 0, 0),
+    "GREEN": (0, 255, 0),
+    "GRID_COLOR": (50, 50, 50),
+    "TEXT_BG_COLOR": (50, 50, 50),
+    "FONT_SIZE": 36,
+    "SPEED": 10
+}
+
+def load_config(filename="config.json"):
+    if os.path.exists(filename):
+        with open(filename, "r") as f:
+            config = json.load(f)
+    else:
+        with open(filename, "w") as f:
+            json.dump(default_config, f, indent=4)
+        config = default_config
+    return config
+
+config = load_config()
+
+WIDTH = config["WIDTH"]
+HEIGHT = config["HEIGHT"]
+CELL_SIZE = config["CELL_SIZE"]
 GRID_WIDTH = WIDTH // CELL_SIZE
 GRID_HEIGHT = HEIGHT // CELL_SIZE
 
-WHITE = (255, 255, 255)
-BLACK = (0, 0, 0)
-GREEN = (0, 255, 0)
-GRID_COLOR = (50, 50, 50)
-TEXT_BG_COLOR = (50, 50, 50)
+WHITE = config["WHITE"]
+BLACK = config["BLACK"]
+GREEN = config["GREEN"]
+GRID_COLOR = config["GRID_COLOR"]
+TEXT_BG_COLOR = config["TEXT_BG_COLOR"]
 
 screen = pygame.display.set_mode((WIDTH, HEIGHT))
 pygame.display.set_caption('Conway\'s Game of Life')
 
 clock = pygame.time.Clock()
 
-font = pygame.font.SysFont(None, 36)
+font = pygame.font.SysFont(None, config["FONT_SIZE"])
 
 def initialize_grid():
     return np.random.randint(2, size=(GRID_WIDTH, GRID_HEIGHT))
@@ -135,7 +163,7 @@ def main():
     show_grid_lines = True
     generation = 0
     total_population = np.sum(grid)
-    speed = 10
+    speed = config["SPEED"]
     dragging = False
     erase_dragging = False
     live_cells_history = []
