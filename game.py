@@ -98,6 +98,7 @@ def main():
     pause = False
     generation = 0
     total_population = np.sum(grid)
+    speed = 10  # Initial speed
     
     while running:
         for event in pygame.event.get():
@@ -110,6 +111,10 @@ def main():
                     grid = initialize_grid()
                     generation = 0
                     total_population = np.sum(grid)
+                if event.key == pygame.K_UP:
+                    speed += 1  # Increase speed
+                if event.key == pygame.K_DOWN:
+                    speed = max(1, speed - 1)  # Decrease speed but not below 1
             if event.type == pygame.MOUSEBUTTONDOWN:
                 x, y = pygame.mouse.get_pos()
                 x //= CELL_SIZE
@@ -130,7 +135,7 @@ def main():
         draw_statistics(grid, generation, births, deaths, avg_population)
         
         pygame.display.flip()
-        clock.tick(10)
+        clock.tick(speed)
 
     pygame.quit()
 
