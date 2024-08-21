@@ -1,5 +1,6 @@
 import pygame
 import numpy as np
+import matplotlib.pyplot as plt
 
 pygame.init()
 
@@ -113,7 +114,8 @@ def main():
     speed = 10  # Initial speed
     dragging = False  # Add a flag to track dragging state
     erase_dragging = False  # Add a flag to track erasing state
-    
+    live_cells_history = []
+
     while running:
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
@@ -125,6 +127,7 @@ def main():
                     grid = initialize_grid()
                     generation = 0
                     total_population = np.sum(grid)
+                    live_cells_history = []
                 if event.key == pygame.K_UP:
                     speed += 1  # Increase speed
                 if event.key == pygame.K_DOWN:
@@ -171,11 +174,21 @@ def main():
             generation += 1
             total_population += np.sum(grid)
             avg_population = total_population / generation if generation != 0 else 0
-        
+            live_cells_history.append(np.sum(grid))  # Track live cells
+
         draw_statistics(grid, generation, births, deaths, avg_population, speed)
         
         pygame.display.flip()
         clock.tick(speed)
+
+    # Plot the live cells history after exiting the game loop
+    plt.figure(figsize=(10, 5))
+    plt.plot(live_cells_history, label='Live Cells Over Time', color='green')
+    plt.xlabel('Generation')
+    plt.ylabel('Live Cells')
+    plt.title('Live Cells Over Time')
+    plt.legend()
+    plt.show()
 
     pygame.quit()
 
