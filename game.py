@@ -1,7 +1,7 @@
 import pygame
 import numpy as np
 import matplotlib.pyplot as plt
-import json  # Add JSON module for saving and loading
+import json
 
 pygame.init()
 
@@ -13,7 +13,7 @@ GRID_HEIGHT = HEIGHT // CELL_SIZE
 WHITE = (255, 255, 255)
 BLACK = (0, 0, 0)
 GREEN = (0, 255, 0)
-GRID_COLOR = (50, 50, 50)  # Dark grey grid lines
+GRID_COLOR = (50, 50, 50)
 TEXT_BG_COLOR = (50, 50, 50)
 
 screen = pygame.display.set_mode((WIDTH, HEIGHT))
@@ -35,6 +35,23 @@ def load_grid(filename="saved_grid.json"):
         grid = np.array(json.load(f))
     return grid
 
+def save_grid_as_image(grid, filename="saved_grid.png"):
+    image_surface = pygame.Surface((WIDTH, HEIGHT))
+    for x in range(GRID_WIDTH):
+        for y in range(GRID_HEIGHT):
+            color = WHITE if grid[x, y] == 1 else BLACK
+            pygame.draw.rect(image_surface, color, pygame.Rect(x * CELL_SIZE, y * CELL_SIZE, CELL_SIZE, CELL_SIZE))
+    pygame.image.save(image_surface, filename)
+
+def load_grid_from_image(filename="saved_grid.png"):
+    image_surface = pygame.image.load(filename)
+    grid = np.zeros((GRID_WIDTH, GRID_HEIGHT), dtype=int)
+    for x in range(GRID_WIDTH):
+        for y in range(GRID_HEIGHT):
+            color = image_surface.get_at((x * CELL_SIZE, y * CELL_SIZE))
+            grid[x, y] = 1 if color == WHITE else 0
+    return grid
+
 def draw_grid(grid):
     for x in range(GRID_WIDTH):
         for y in range(GRID_HEIGHT):
@@ -48,24 +65,17 @@ def draw_lines():
         pygame.draw.line(screen, GRID_COLOR, (0, y), (WIDTH, y))
 
 def update_grid(grid):
-    # Create a padded version of the grid to handle edge wrapping
     padded_grid = np.pad(grid, pad_width=1, mode='wrap')
-    
-    # Calculate the sum of neighbors using convolution
     neighbor_sum = (
         padded_grid[:-2, :-2] + padded_grid[:-2, 1:-1] + padded_grid[:-2, 2:] +
         padded_grid[1:-1, :-2] + padded_grid[1:-1, 2:] +
         padded_grid[2:, :-2] + padded_grid[2:, 1:-1] + padded_grid[2:, 2:]
     )
-
-    # Apply the rules of Conway's Game of Life
     births = (grid == 0) & (neighbor_sum == 3)
     deaths = (grid == 1) & ((neighbor_sum < 2) | (neighbor_sum > 3))
-    
     new_grid = np.copy(grid)
     new_grid[births] = 1
     new_grid[deaths] = 0
-    
     return new_grid, np.sum(births), np.sum(deaths)
 
 def draw_statistics(grid, generation, births, deaths, avg_population, speed):
@@ -122,12 +132,12 @@ def main():
     grid = initialize_grid()
     running = True
     pause = False
-    show_grid_lines = True  # Toggle for grid lines
+    show_grid_lines = True
     generation = 0
     total_population = np.sum(grid)
-    speed = 10  # Initial speed
-    dragging = False  # Add a flag to track dragging state
-    erase_dragging = False  # Add a flag to track erasing state
+    speed = 10
+    dragging = False
+    erase_dragging = False
     live_cells_history = []
 
     while running:
@@ -143,63 +153,66 @@ def main():
                     total_population = np.sum(grid)
                     live_cells_history = []
                 if event.key == pygame.K_UP:
-                    speed += 1  # Increase speed
+                    speed += 1
                 if event.key == pygame.K_DOWN:
-                    speed = max(1, speed - 1)  # Decrease speed but not below 1
+                    speed = max(1, speed - 1)
                 if event.key == pygame.K_g:
-                    show_grid_lines = not show_grid_lines  # Toggle grid lines
-                if event.key == pygame.K_s:  # Save the grid state
+                    show_grid_lines = not show_grid_lines
+                if event.key == pygame.K_s:
                     save_grid(grid)
-                if event.key == pygame.K_l:  # Load the grid state
+                if event.key == pygame.K_l:
                     grid = load_grid()
+                if event.key == pygame.K_i:
+                    save_grid_as_image(grid)
+                if event.key == pygame.K_o:
+                    grid = load_grid_from_image()
             if event.type == pygame.MOUSEBUTTONDOWN:
-                if event.button == 1:  # Left mouse button
-                    dragging = True  # Start dragging
+                if event.button == 1:
+                    dragging = True
                     x, y = pygame.mouse.get_pos()
                     x //= CELL_SIZE
                     y //= CELL_SIZE
                     grid[x, y] = 1 - grid[x, y]
                     total_population = np.sum(grid)
-                if event.button == 3:  # Right mouse button
-                    erase_dragging = True  # Start erasing
+                if event.button == 3:
+                    erase_dragging = True
                     x, y = pygame.mouse.get_pos()
                     x //= CELL_SIZE
                     y //= CELL_SIZE
-                    grid[x, y] = 0  # Erase cell
+                    grid[x, y] = 0
                     total_population = np.sum(grid)
             if event.type == pygame.MOUSEBUTTONUP:
-                if event.button == 1:  # Left mouse button
-                    dragging = False  # Stop dragging
-                if event.button == 3:  # Right mouse button
-                    erase_dragging = False  # Stop erasing
+                if event.button == 1:
+                    dragging = False
+                if event.button == 3:
+                    erase_dragging = False
             if event.type == pygame.MOUSEMOTION:
                 x, y = pygame.mouse.get_pos()
                 x //= CELL_SIZE
                 y //= CELL_SIZE
                 if dragging:
-                    grid[x, y] = 1  # Make cell alive while dragging
+                    grid[x, y] = 1
                 if erase_dragging:
-                    grid[x, y] = 0  # Erase cell while dragging
+                    grid[x, y] = 0
                 total_population = np.sum(grid)
 
         screen.fill(BLACK)
         draw_grid(grid)
         if show_grid_lines:
-            draw_lines()  # Draw lines only if show_grid_lines is True
+            draw_lines()
         
         if not pause:
             grid, births, deaths = update_grid(grid)
             generation += 1
             total_population += np.sum(grid)
             avg_population = total_population / generation if generation != 0 else 0
-            live_cells_history.append(np.sum(grid))  # Track live cells
+            live_cells_history.append(np.sum(grid))
 
         draw_statistics(grid, generation, births, deaths, avg_population, speed)
         
         pygame.display.flip()
         clock.tick(speed)
 
-    # Plot the live cells history after exiting the game loop
     plt.figure(figsize=(10, 5))
     plt.plot(live_cells_history, label='Live Cells Over Time', color='green')
     plt.xlabel('Generation')
