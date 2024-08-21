@@ -38,21 +38,25 @@ def draw_lines():
         pygame.draw.line(screen, GRID_COLOR, (0, y), (WIDTH, y))
 
 def update_grid(grid):
+    # Create a padded version of the grid to handle edge wrapping
+    padded_grid = np.pad(grid, pad_width=1, mode='wrap')
+    
+    # Calculate the sum of neighbors using convolution
+    neighbor_sum = (
+        padded_grid[:-2, :-2] + padded_grid[:-2, 1:-1] + padded_grid[:-2, 2:] +
+        padded_grid[1:-1, :-2] + padded_grid[1:-1, 2:] +
+        padded_grid[2:, :-2] + padded_grid[2:, 1:-1] + padded_grid[2:, 2:]
+    )
+
+    # Apply the rules of Conway's Game of Life
+    births = (grid == 0) & (neighbor_sum == 3)
+    deaths = (grid == 1) & ((neighbor_sum < 2) | (neighbor_sum > 3))
+    
     new_grid = np.copy(grid)
-    births = deaths = 0
-    for x in range(GRID_WIDTH):
-        for y in range(GRID_HEIGHT):
-            total = (grid[(x-1)%GRID_WIDTH, (y-1)%GRID_HEIGHT] + grid[(x-1)%GRID_WIDTH, y] + grid[(x-1)%GRID_WIDTH, (y+1)%GRID_HEIGHT] +
-                     grid[x, (y-1)%GRID_HEIGHT] + grid[x, (y+1)%GRID_HEIGHT] +
-                     grid[(x+1)%GRID_WIDTH, (y-1)%GRID_HEIGHT] + grid[(x+1)%GRID_WIDTH, y] + grid[(x+1)%GRID_WIDTH, (y+1)%GRID_HEIGHT])
-            
-            if grid[x, y] == 1 and (total < 2 or total > 3):
-                new_grid[x, y] = 0
-                deaths += 1
-            elif grid[x, y] == 0 and total == 3:
-                new_grid[x, y] = 1
-                births += 1
-    return new_grid, births, deaths
+    new_grid[births] = 1
+    new_grid[deaths] = 0
+    
+    return new_grid, np.sum(births), np.sum(deaths)
 
 def draw_statistics(grid, generation, births, deaths, avg_population, speed):
     live_cells = np.sum(grid)
