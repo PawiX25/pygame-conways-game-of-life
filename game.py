@@ -216,20 +216,19 @@ def load_grid(filename="saved_grid.json"):
     else:
         print("No saved grid found.")
         return initialize_grid()
+def save_grid_as_image(grid, filename="grid_image.png"):
+    """Save the grid as an image."""
+    img = np.zeros((GRID_WIDTH, GRID_HEIGHT, 3), dtype=np.uint8)
+    img[grid == 1] = [0, 255, 0]  # Green cells
+    img[grid == 0] = [0, 0, 0]    # Black cells
+    plt.imsave(filename, img)
 
-def save_grid_as_image(grid, filename="saved_grid.png"):
-    """Save the grid as a PNG image."""
-    plt.imshow(grid, cmap='Greys', interpolation='none')
-    plt.axis('off')  # Hide the axes
-    plt.savefig(filename, bbox_inches='tight', pad_inches=0, dpi=300)
-    plt.close()
 
-def load_grid_from_image(filename="saved_grid.png"):
-    """Load the grid from a PNG image."""
+def load_grid_from_image(filename="grid_image.png"):
+    """Load the grid from an image."""
     if os.path.exists(filename):
         img = mpimg.imread(filename)
-        # Convert the image to a binary grid (0 and 1)
-        grid = (img[:, :, 0] < 0.5).astype(int)  # Assumes binary image with black cells
+        grid = (img[:, :, 1] > 0.5).astype(int)  # Assuming green cells are alive
         return grid
     else:
         print("Image file not found.")
