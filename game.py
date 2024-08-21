@@ -1,6 +1,7 @@
 import pygame
 import numpy as np
 import matplotlib.pyplot as plt
+import matplotlib.image as mpimg
 import json
 import os
 
@@ -201,6 +202,39 @@ def draw_menu():
     
     screen.blit(menu_surface, (WIDTH // 2 - 250, HEIGHT // 2 - 100))
 
+def save_grid(grid, filename="saved_grid.json"):
+    """Save the grid to a JSON file."""
+    with open(filename, "w") as f:
+        json.dump(grid.tolist(), f)
+
+def load_grid(filename="saved_grid.json"):
+    """Load the grid from a JSON file."""
+    if os.path.exists(filename):
+        with open(filename, "r") as f:
+            grid = np.array(json.load(f), dtype=int)
+        return grid
+    else:
+        print("No saved grid found.")
+        return initialize_grid()
+
+def save_grid_as_image(grid, filename="saved_grid.png"):
+    """Save the grid as a PNG image."""
+    plt.imshow(grid, cmap='Greys', interpolation='none')
+    plt.axis('off')  # Hide the axes
+    plt.savefig(filename, bbox_inches='tight', pad_inches=0, dpi=300)
+    plt.close()
+
+def load_grid_from_image(filename="saved_grid.png"):
+    """Load the grid from a PNG image."""
+    if os.path.exists(filename):
+        img = mpimg.imread(filename)
+        # Convert the image to a binary grid (0 and 1)
+        grid = (img[:, :, 0] < 0.5).astype(int)  # Assumes binary image with black cells
+        return grid
+    else:
+        print("Image file not found.")
+        return initialize_grid()
+
 def main():
     grid = initialize_grid()
     age_grid = initialize_age_grid()
@@ -214,6 +248,7 @@ def main():
     erase_dragging = False
     live_cells_history = []
     ruleset = None
+    show_tooltip = True  # Initial state of the tooltip
 
     # Display the menu
     menu_active = True
