@@ -112,6 +112,7 @@ def main():
     total_population = np.sum(grid)
     speed = 10  # Initial speed
     dragging = False  # Add a flag to track dragging state
+    erase_dragging = False  # Add a flag to track erasing state
     
     while running:
         for event in pygame.event.get():
@@ -138,14 +139,26 @@ def main():
                     y //= CELL_SIZE
                     grid[x, y] = 1 - grid[x, y]
                     total_population = np.sum(grid)
+                if event.button == 3:  # Right mouse button
+                    erase_dragging = True  # Start erasing
+                    x, y = pygame.mouse.get_pos()
+                    x //= CELL_SIZE
+                    y //= CELL_SIZE
+                    grid[x, y] = 0  # Erase cell
+                    total_population = np.sum(grid)
             if event.type == pygame.MOUSEBUTTONUP:
                 if event.button == 1:  # Left mouse button
                     dragging = False  # Stop dragging
-            if event.type == pygame.MOUSEMOTION and dragging:
+                if event.button == 3:  # Right mouse button
+                    erase_dragging = False  # Stop erasing
+            if event.type == pygame.MOUSEMOTION:
                 x, y = pygame.mouse.get_pos()
                 x //= CELL_SIZE
                 y //= CELL_SIZE
-                grid[x, y] = 1  # Make cell alive while dragging
+                if dragging:
+                    grid[x, y] = 1  # Make cell alive while dragging
+                if erase_dragging:
+                    grid[x, y] = 0  # Erase cell while dragging
                 total_population = np.sum(grid)
 
         screen.fill(BLACK)
