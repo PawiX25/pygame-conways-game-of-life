@@ -4,6 +4,8 @@ This project is a simulation of cellular automata, including classic and variant
 
 ## Features
 
+![Simulation Screenshot](https://github.com/user-attachments/assets/a18f030a-8768-4f47-bc3c-12b3c19dbb7a)
+
 - **Grid Initialization**: Randomly generates an initial grid of live and dead cells.
 - **Rule Variants**: Supports Conway's Game of Life, HighLife, and Day & Night rulesets.
 - **Interactive Tools**: Add or erase cells with a brush tool, adjust brush size, and toggle grid lines.
